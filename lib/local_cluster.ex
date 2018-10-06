@@ -13,11 +13,9 @@ defmodule LocalCluster do
   """
   @spec start :: :ok
   def start do
-    ipv4a = get_ipv4_addr()
-
-    { :ok, _pid } = :net_kernel.start([ :"manager@#{ipv4a}" ])
+    { :ok, ipv4 } = :inet.parse_ipv4_address('127.0.0.1')
+    { :ok, _pid } = :net_kernel.start([ :"manager@127.0.0.1" ])
     { :ok, _pid } = :erl_boot_server.start_link([])
-    { :ok, ipv4 } = :inet.parse_ipv4_address(ipv4a)
 
     :ok = :erl_boot_server.add_slave(ipv4)
   end
@@ -33,13 +31,11 @@ defmodule LocalCluster do
   @spec start_nodes(binary, integer) :: [ atom ]
   def start_nodes(prefix, amount)
   when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
-    ipv4a = get_ipv4_addr()
-
     nodes = Enum.map(1..amount, fn idx ->
       { :ok, name } = :slave.start_link(
-        ipv4a,
+        '127.0.0.1',
         :"#{prefix}#{idx}",
-        '-loader inet -hosts #{ipv4a} -setcookie #{:erlang.get_cookie()}'
+        '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}'
       )
       name
     end)
@@ -73,15 +69,4 @@ defmodule LocalCluster do
   @spec stop :: :ok | { :error, atom }
   def stop,
     do: :net_kernel.stop()
-
-  # Quick handler to parse the local host to an IPV4 address.
-  defp get_ipv4_addr do
-    { :ok, name } = :inet.gethostname()
-    { :ok, addr } = :inet.getaddr(name, :inet)
-
-    addr
-    |> Tuple.to_list
-    |> Enum.join(".")
-    |> Kernel.to_charlist
-  end
 end
