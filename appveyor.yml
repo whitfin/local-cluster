@@ -1,0 +1,26 @@
+version: '{branch}-{build}'
+
+skip_commits:
+  message: /\[skip ci\]/
+
+environment:
+  elixir_version: 1.7.1
+
+branches:
+  only:
+    - master
+
+cache:
+  - '%APPDATA%\Local\Temp -> appveyor.yml'
+
+install:
+  - cinst elixir --version %elixir_version%
+  - refreshenv
+
+build_script:
+  - mix local.hex --force
+  - mix local.rebar --force
+  - mix deps.get
+
+test_script:
+  - mix test --trace
