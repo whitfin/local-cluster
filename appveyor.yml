@@ -18,6 +18,7 @@ install:
   - refreshenv
 
 build_script:
+  - epmd -daemon
   - mix local.hex --force
   - mix local.rebar --force
   - mix deps.get
