@@ -16,8 +16,8 @@ defmodule LocalCluster do
     ipv4a = get_ipv4_addr()
 
     { :ok, _pid } = :net_kernel.start([ :"manager@#{ipv4a}" ])
-    { :ok, ipv4 } = :inet.parse_ipv4_address(ipv4a)
     { :ok, _pid } = :erl_boot_server.start_link([])
+    { :ok, ipv4 } = :inet.parse_ipv4_address(ipv4a)
 
     :ok = :erl_boot_server.add_slave(ipv4)
   end
