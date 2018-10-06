@@ -3,7 +3,7 @@ defmodule LocalCluster.MixProject do
 
   @version "1.0.0"
   @url_docs "http://hexdocs.pm/local_cluster"
-  @url_github "https://github.com/whitfin/local_cluster"
+  @url_github "https://github.com/whitfin/local-cluster"
 
   def project do
     [
@@ -43,6 +43,11 @@ defmodule LocalCluster.MixProject do
 
   # Run "mix help deps" to learn about dependencies.
   defp deps do
-    [{ :ex_doc, "~> 0.16", optional: true, only: [ :docs ] }]
+    [
+      # Production dependencies
+      { :global_lazy, "~> 1.0" },
+      # Local dependencies, not shipped with the app
+      { :ex_doc, "~> 0.16", optional: true, only: [ :docs ] }
+    ]
   end
 end

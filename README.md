@@ -1,5 +1,5 @@
 # LocalCluster
-[![Build Status](https://img.shields.io/travis/whitfin/local-cluster.svg?label=unix)](https://travis-ci.org/whitfin/local-cluster) [![Hex.pm Version](https://img.shields.io/hexpm/v/local-cluster.svg)](https://hex.pm/packages/local-cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local-cluster/)
+[![Build Status](https://img.shields.io/travis/whitfin/local-cluster.svg?label=unix)](https://travis-ci.org/whitfin/local-cluster) [![Hex.pm Version](https://img.shields.io/hexpm/v/local-cluster.svg)](https://hex.pm/packages/local-cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local_cluster/)
 
 This library is designed to assist in testing distributed states in Elixir
 which require a number of local nodes.
@@ -18,11 +18,11 @@ Hex (shown at the top of this README).
 
 ```elixir
 def deps do
-  [{:local-cluster, "~> 1.0", only: [:test]}]
+  [{:local_cluster, "~> 1.0", only: [:test]}]
 end
 ```
 
-Documentation and examples can be found on [Hexdocs](https://hexdocs.pm/local-cluster/)
+Documentation and examples can be found on [Hexdocs](https://hexdocs.pm/local_cluster/)
 as they're updated automatically alongside each release. Note that you should only
 use the `:test` flag in your dependency if you're not using it for other environments.
 

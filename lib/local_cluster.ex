@@ -13,11 +13,15 @@ defmodule LocalCluster do
   """
   @spec start :: :ok
   def start do
-    { :ok, ipv4 } = :inet.parse_ipv4_address('127.0.0.1')
-    { :ok, _pid } = :net_kernel.start([ :"manager@127.0.0.1" ])
-    { :ok, _pid } = :erl_boot_server.start_link([])
-
-    :ok = :erl_boot_server.add_slave(ipv4)
+    # only ever handle the :erl_boot_server on the initial startup
+    with { :ok, _ } <- :net_kernel.start([ :"manager@127.0.0.1" ]) do
+      # voodoo flag to generate a "started" atom flag
+      GlobalLazy.init("#{__MODULE__}:started", fn ->
+        { :ok, _ } = :erl_boot_server.start([
+          { 127, 0, 0, 1 }
+        ])
+      end)
+    end
   end
 
   @doc """
