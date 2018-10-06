@@ -1,5 +1,5 @@
 # LocalCluster
-[![Unix Build Status](https://img.shields.io/travis/whitfin/local-cluster.svg?label=unix)](https://travis-ci.org/whitfin/local-cluster) [![Windows Build Status](https://img.shields.io/appveyor/ci/whitfin/local-cluster.svg?label=win)](https://ci.appveyor.com/project/whitfin/local-cluster) [![Hex.pm Version](https://img.shields.io/hexpm/v/local-cluster.svg)](https://hex.pm/packages/local-cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local-cluster/)
+[![Build Status](https://img.shields.io/travis/whitfin/local-cluster.svg?label=unix)](https://travis-ci.org/whitfin/local-cluster) [![Hex.pm Version](https://img.shields.io/hexpm/v/local-cluster.svg)](https://hex.pm/packages/local-cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local-cluster/)
 
 This library is designed to assist in testing distributed states in Elixir
 which require a number of local nodes.
