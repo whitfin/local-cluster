@@ -21,6 +21,7 @@ defmodule LocalCluster do
           { 127, 0, 0, 1 }
         ])
       end)
+      :ok
     end
   end
 
