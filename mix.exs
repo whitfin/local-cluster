@@ -1,7 +1,7 @@
 defmodule LocalCluster.MixProject do
   use Mix.Project
 
-  @version "1.0.1"
+  @version "1.0.2"
   @url_docs "http://hexdocs.pm/local_cluster"
   @url_github "https://github.com/whitfin/local-cluster"
 
