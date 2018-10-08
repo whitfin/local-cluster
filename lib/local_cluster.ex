@@ -16,7 +16,7 @@ defmodule LocalCluster do
     # only ever handle the :erl_boot_server on the initial startup
     with { :ok, _ } <- :net_kernel.start([ :"manager@127.0.0.1" ]) do
       # voodoo flag to generate a "started" atom flag
-      GlobalLazy.init("#{__MODULE__}:started", fn ->
+      :global_flags.once("local_cluster:started", fn ->
         { :ok, _ } = :erl_boot_server.start([
           { 127, 0, 0, 1 }
         ])

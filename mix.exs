@@ -45,7 +45,7 @@ defmodule LocalCluster.MixProject do
   defp deps do
     [
       # Production dependencies
-      { :global_lazy, "~> 1.0" },
+      { :global_flags, "~> 1.0" },
       # Local dependencies, not shipped with the app
       { :ex_doc, "~> 0.16", optional: true, only: [ :docs ] }
     ]
