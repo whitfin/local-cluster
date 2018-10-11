@@ -36,7 +36,7 @@ child nodes for testing:
 defmodule MyTest do
   use ExUnit.Case
 
-  test "something with a required cluster" dp
+  test "something with a required cluster" do
     :ok = LocalCluster.start()
 
     nodes = LocalCluster.start_nodes("my-cluster", 3)
