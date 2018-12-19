@@ -40,7 +40,7 @@ defmodule LocalCluster do
       { :ok, name } = :slave.start_link(
         '127.0.0.1',
         :"#{prefix}#{idx}",
-        '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()} -logger level #{Logger.level()}'
+        '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}'
       )
       name
     end)
@@ -50,6 +50,8 @@ defmodule LocalCluster do
     rpc.(:code, :add_paths, [ :code.get_path() ])
     rpc.(Application, :ensure_all_started, [ :mix ])
     rpc.(Mix, :env, [ Mix.env() ])
+    rpc.(Application, :ensure_all_started, [ :logger ])
+    rpc.(Logger, :configure, [ level: Logger.level() ])
 
     for { app_name, _, _ } <- Application.loaded_applications() do
       for { key, val } <- Application.get_all_env(app_name) do
