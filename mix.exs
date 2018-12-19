@@ -1,7 +1,7 @@
 defmodule LocalCluster.MixProject do
   use Mix.Project
 
-  @version "1.0.2"
+  @version "1.0.3"
   @url_docs "http://hexdocs.pm/local_cluster"
   @url_github "https://github.com/whitfin/local-cluster"
 
@@ -37,7 +37,6 @@ defmodule LocalCluster.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger],
       extra_applications: [:logger]
     ]
   end
