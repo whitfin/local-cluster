@@ -50,6 +50,8 @@ defmodule LocalCluster do
     rpc.(:code, :add_paths, [ :code.get_path() ])
     rpc.(Application, :ensure_all_started, [ :mix ])
     rpc.(Mix, :env, [ Mix.env() ])
+    rpc.(Application, :ensure_all_started, [ :logger ])
+    rpc.(Logger, :configure, [ level: Logger.level() ])
 
     for { app_name, _, _ } <- Application.loaded_applications() do
       for { key, val } <- Application.get_all_env(app_name) do
