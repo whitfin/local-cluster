@@ -13,8 +13,8 @@ defmodule LocalCluster do
   """
   @spec start :: :ok
   def start do
-    # only ever handle the :erl_boot_server on the initial startup
-    with { :ok, _ } <- :net_kernel.start([ :"manager@127.0.0.1" ]) do
+    # boot server startup
+    start_boot_server = fn ->
       # voodoo flag to generate a "started" atom flag
       :global_flags.once("local_cluster:started", fn ->
         { :ok, _ } = :erl_boot_server.start([
@@ -22,6 +22,16 @@ defmodule LocalCluster do
         ])
       end)
       :ok
+    end
+
+    # only ever handle the :erl_boot_server on the initial startup
+    case :net_kernel.start([ :"manager@127.0.0.1" ]) do
+      # handle nodes that have already been started elsewhere
+      { :error, { :already_started, _ } } -> start_boot_server.()
+      # handle the node being started
+      { :ok, _ } -> start_boot_server.()
+      # pass anything else
+      anything -> anything
     end
   end
 
