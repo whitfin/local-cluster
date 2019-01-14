@@ -28,9 +28,12 @@ use the `:test` flag in your dependency if you're not using it for other environ
 
 ## Setup
 
-To configure your current node for cluster testing, you need to change some things
-in your `test_helper.exs` in order to set up some requirements. A basic example looks
-something like this:
+To configure your test suites for cluster testing, you need to run through a one-time
+setup to change some stuff in your `test_helper.exs`. This is required to avoid some
+potential issues with your node name changing after your application tree has already
+stated. This also reduces some bloat due to having `LocalCluster.start/0` in most test
+cases. The snippet below can be used as a sample helper file. Make sure to change the
+application name to match your application name.
 
 ```elixir
 # start the current node as a manager
@@ -57,12 +60,6 @@ def project do
   ]
 end
 ```
-
-Whilst you can also call `LocalCluster.start/1` directly inside tests that start
-clusters, initialization this way will avoid potential issues with your node name
-changing after your app tree has already started (and so is recommended). It also
-helps with the fact that test order isn't guaranteed, and so `LocalCluster.start/1`
-sometimes bloats the size of your actual test code.
 
 This library itself uses this setup, so you can copy/paste as needed or use as an
 example when integrating into your own codebase.
