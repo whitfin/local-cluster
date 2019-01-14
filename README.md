@@ -26,6 +26,47 @@ Documentation and examples can be found on [Hexdocs](https://hexdocs.pm/local_cl
 as they're updated automatically alongside each release. Note that you should only
 use the `:test` flag in your dependency if you're not using it for other environments.
 
+## Setup
+
+To configure your current node for cluster testing, you need to change some things
+in your `test_helper.exs` in order to set up some requirements. A basic example looks
+something like this:
+
+```elixir
+# start the current node as a manager
+:ok = LocalCluster.start()
+
+# start your application tree manually
+Application.ensure_all_started(:my_app)
+
+# run all tests!
+ExUnit.start()
+
+# stop the cluster when done
+:ok = LocalCluster.stop()
+```
+
+You will also need to pass the `--no-start` flag to `mix test`. Fortunately this is
+easy enough, as you can add an alias in your `mix.exs` to do this automatically:
+
+```elixir
+def project do
+  [
+    # ...
+    aliases: [
+      test: "test --no-start"
+    ]
+    # ...
+  ]
+end
+```
+
+Whilst you can also call `LocalCluster.start/1` directly inside tests that start
+clusters, initialization this way will avoid potential issues with your node name
+changing after your app tree has already started (and so is recommended). It also
+helps with the fact that test order isn't guaranteed, and so `LocalCluster.start/1`
+sometimes bloats the size of your actual test code.
+
 ## Usage
 
 As mentioned above, the API is deliberately _tiny_ to make it easier to use this
@@ -37,8 +78,6 @@ defmodule MyTest do
   use ExUnit.Case
 
   test "something with a required cluster" do
-    :ok = LocalCluster.start()
-
     nodes = LocalCluster.start_nodes("my-cluster", 3)
 
     [node1, node2, node3] = nodes
