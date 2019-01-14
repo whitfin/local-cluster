@@ -3,8 +3,6 @@ defmodule LocalClusterTest do
   doctest LocalCluster
 
   test "creates and stops child nodes" do
-    :ok = LocalCluster.start()
-
     nodes = LocalCluster.start_nodes(:child, 3)
 
     [node1, node2, node3] = nodes

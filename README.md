@@ -41,9 +41,6 @@ Application.ensure_all_started(:my_app)
 
 # run all tests!
 ExUnit.start()
-
-# stop the cluster when done
-:ok = LocalCluster.stop()
 ```
 
 You will also need to pass the `--no-start` flag to `mix test`. Fortunately this is
@@ -66,6 +63,9 @@ clusters, initialization this way will avoid potential issues with your node nam
 changing after your app tree has already started (and so is recommended). It also
 helps with the fact that test order isn't guaranteed, and so `LocalCluster.start/1`
 sometimes bloats the size of your actual test code.
+
+This library itself uses this setup, so you can copy/paste as needed or use as an
+example when integrating into your own codebase.
 
 ## Usage
 

@@ -30,6 +30,9 @@ defmodule LocalCluster.MixProject do
         main: "LocalCluster",
         source_ref: "v#{@version}",
         source_url: @url_github,
+      ],
+      aliases: [
+        test: "test --no-start"
       ]
     ]
   end
