@@ -35,6 +35,14 @@ defmodule LocalCluster do
     end
   end
 
+  defmacro start_nodes(prefix, amount) do
+    caller_file = __CALLER__.file
+
+    quote do
+      LocalCluster.start_nodes(unquote(prefix), unquote(amount), unquote(caller_file))
+    end
+  end
+
   @doc """
   Starts a number of namespaced child nodes.
 
@@ -43,17 +51,22 @@ defmodule LocalCluster do
   nodes are linked to the current process, and so will terminate when the
   parent process does for automatic cleanup.
   """
-  @spec start_nodes(binary, integer) :: [ atom ]
-  def start_nodes(prefix, amount)
-  when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
-    nodes = Enum.map(1..amount, fn idx ->
-      { :ok, name } = :slave.start_link(
-        '127.0.0.1',
-        :"#{prefix}#{idx}",
-        '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}'
-      )
-      name
-    end)
+  @spec start_nodes(binary, integer) :: [atom]
+  def start_nodes(prefix, amount, file)
+      when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
+    nodes =
+      Enum.map(1..amount, fn idx ->
+        {:ok, name} =
+          :slave.start_link(
+            '127.0.0.1',
+            :"#{prefix}#{idx}",
+            '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}'
+          )
+
+        name
+      end)
+
+    ensure_module(nodes, file)
 
     rpc = &({ _, [] } = :rpc.multicall(nodes, &1, &2, &3))
 
@@ -73,6 +86,20 @@ defmodule LocalCluster do
     end
 
     nodes
+  end
+
+  defp ensure_module(_nodes, _mod = nil), do: nil
+
+  defp ensure_module(nodes, f) do
+    modules = Code.compile_file(f)
+
+    Enum.each(nodes, fn node ->
+      Enum.each(modules, fn {m, b} ->
+        unless :rpc.call(node, :code, :is_loaded, [m]) do
+          {:module, _} = :rpc.call(node, :code, :load_binary, [m, String.to_charlist(f), b])
+        end
+      end)
+    end)
   end
 
   @doc """
