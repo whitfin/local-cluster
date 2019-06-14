@@ -78,7 +78,7 @@ defmodule LocalCluster do
       for { module, binary } <- Code.compile_string(source, file) do
         rpc.(:code, :load_binary, [
           module,
-          to_charlist(file),
+          :unicode.characters_to_list(file),
           binary
         ])
       end
