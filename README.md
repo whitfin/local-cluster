@@ -103,24 +103,26 @@ to communicate with via RPC or however you'd like. Although they're automaticall
 up when the calling process dies, you can manually stop nodes as well to test disconnection.
 
 If you need to load any additional files onto the remote nodes, you can make use of the
-`load/2` function by providing a list of nodes and a file name to compile on the cluster.
-This is necessary if you wish to spawn tasks onto the cluster from inside your test code,
-as your test code is not loaded into the cluster automatically:
+`:files` option at startup time by providing an absolute file path to compile on the
+cluster. This is necessary if you wish to spawn tasks onto the cluster from inside your
+test code, as your test code is not loaded into the cluster automatically:
 
 ```elixir
 defmodule MyTest do
   use ExUnit.Case
 
   test "spawning tasks on a cluster" do
-    nodes = LocalCluster.start_nodes(:spawn, 3)
+    nodes = LocalCluster.start_nodes(:spawn, 3, [
+      files: [
+        __ENV__.file
+      ]
+    ])
 
     [node1, node2, node3] = nodes
 
     assert Node.ping(node1) == :pong
     assert Node.ping(node2) == :pong
     assert Node.ping(node3) == :pong
-
-    LocalCluster.load(nodes, __ENV__.file)
 
     caller = self()
 

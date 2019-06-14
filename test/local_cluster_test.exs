@@ -25,15 +25,17 @@ defmodule LocalClusterTest do
   end
 
   test "spawns tasks directly on child nodes" do
-    nodes = LocalCluster.start_nodes(:spawn, 3)
+    nodes = LocalCluster.start_nodes(:spawn, 3, [
+      files: [
+        __ENV__.file
+      ]
+    ])
 
     [node1, node2, node3] = nodes
 
     assert Node.ping(node1) == :pong
     assert Node.ping(node2) == :pong
     assert Node.ping(node3) == :pong
-
-    LocalCluster.load(nodes, __ENV__.file)
 
     caller = self()
 
