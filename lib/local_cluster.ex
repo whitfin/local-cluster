@@ -76,6 +76,33 @@ defmodule LocalCluster do
   end
 
   @doc """
+  Loads an Elixir file across a cluster.
+
+  This will evaluate the provided file and load it across the cluster,
+  which can be useful when you need to load test files remotely. This
+  will not override the existing definition of the module if it already
+  exists in the cluster.
+  """
+  @spec load([ atom ], binary) :: :ok
+  def load(nodes, file) when is_binary(file) and is_list(nodes) do
+    compiled = Code.compile_file(file)
+
+    for node <- nodes do
+      for { module, binary } <- compiled do
+        unless :rpc.call(node, :code, :is_loaded, [ module ]) do
+          { :module, _ } = :rpc.call(node, :code, :load_binary, [
+            module,
+            to_charlist(file),
+            binary
+          ])
+        end
+      end
+    end
+
+    :ok
+  end
+
+  @doc """
   Stops a set of child nodes.
   """
   @spec stop_nodes([ atom ]) :: :ok
