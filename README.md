@@ -18,7 +18,7 @@ Hex (shown at the top of this README).
 
 ```elixir
 def deps do
-  [{:local_cluster, "~> 1.0", only: [:test]}]
+  [{:local_cluster, "~> 1.1", only: [:test]}]
 end
 ```
 
@@ -101,3 +101,46 @@ end
 After calling `start_nodes/2`, you will receive a list of node names you can then use
 to communicate with via RPC or however you'd like. Although they're automatically cleaned
 up when the calling process dies, you can manually stop nodes as well to test disconnection.
+
+If you need to load any additional files onto the remote nodes, you can make use of the
+`:files` option at startup time by providing an absolute file path to compile on the
+cluster. This is necessary if you wish to spawn tasks onto the cluster from inside your
+test code, as your test code is not loaded into the cluster automatically:
+
+```elixir
+defmodule MyTest do
+  use ExUnit.Case
+
+  test "spawning tasks on a cluster" do
+    nodes = LocalCluster.start_nodes(:spawn, 3, [
+      files: [
+        __ENV__.file
+      ]
+    ])
+
+    [node1, node2, node3] = nodes
+
+    assert Node.ping(node1) == :pong
+    assert Node.ping(node2) == :pong
+    assert Node.ping(node3) == :pong
+
+    caller = self()
+
+    Node.spawn(node1, fn ->
+      send(caller, :from_node_1)
+    end)
+
+    Node.spawn(node2, fn ->
+      send(caller, :from_node_2)
+    end)
+
+    Node.spawn(node3, fn ->
+      send(caller, :from_node_3)
+    end)
+
+    assert_receive :from_node_1
+    assert_receive :from_node_2
+    assert_receive :from_node_3
+  end
+end
+```

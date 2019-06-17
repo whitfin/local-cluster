@@ -43,14 +43,14 @@ defmodule LocalCluster do
   nodes are linked to the current process, and so will terminate when the
   parent process does for automatic cleanup.
   """
-  @spec start_nodes(binary, integer) :: [ atom ]
-  def start_nodes(prefix, amount)
+  @spec start_nodes(binary, integer, Keyword.t) :: [ atom ]
+  def start_nodes(prefix, amount, options \\ [])
   when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
     nodes = Enum.map(1..amount, fn idx ->
       { :ok, name } = :slave.start_link(
         '127.0.0.1',
         :"#{prefix}#{idx}",
-        '-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}'
+        '-loader inet -hosts 127.0.0.1 -setcookie "#{:erlang.get_cookie()}"'
       )
       name
     end)
@@ -62,6 +62,18 @@ defmodule LocalCluster do
     rpc.(Application, :ensure_all_started, [ :mix ])
     rpc.(Mix, :env, [ Mix.env() ])
     rpc.(Mix.CLI, :main, [])
+
+    for file <- Keyword.get(options, :files, []) do
+      { :ok, source } = File.read(file)
+
+      for { module, binary } <- Code.compile_string(source, file) do
+        rpc.(:code, :load_binary, [
+          module,
+          :unicode.characters_to_list(file),
+          binary
+        ])
+      end
+    end
 
     nodes
   end
