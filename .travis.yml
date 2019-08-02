@@ -7,6 +7,7 @@ os:
 
 # Version matrix (language).
 elixir:
+  - 1.9
   - 1.8
   - 1.7
   - 1.6
@@ -25,8 +26,19 @@ otp_release:
 
 # Matrix modifications.
 matrix:
+  # Additional builds.
+  include:
+    - elixir: 1.9
+      otp_release: 22.0
+      script:
+        - mix coveralls.travis --trace
+
   # Incompatible pairs.
   exclude:
+    - elixir: 1.9
+      otp_release: 19.3
+    - elixir: 1.9
+      otp_release: 18.3
     - elixir: 1.8
       otp_release: 19.3
     - elixir: 1.8
@@ -34,23 +46,37 @@ matrix:
     - elixir: 1.7
       otp_release: 18.3
     - elixir: 1.6
+      otp_release: 22.0
+    - elixir: 1.6
       otp_release: 18.3
     - elixir: 1.5
+      otp_release: 22.0
+    - elixir: 1.5
       otp_release: 21.3
+    - elixir: 1.5
+      otp_release: 18.3
+    - elixir: 1.4
+      otp_release: 22.0
     - elixir: 1.4
       otp_release: 21.3
+    - elixir: 1.4
+      otp_release: 18.3
     - elixir: 1.3
       otp_release: 22.0
     - elixir: 1.3
       otp_release: 21.3
     - elixir: 1.3
       otp_release: 20.3
+    - elixir: 1.3
+      otp_release: 18.3
     - elixir: 1.2
       otp_release: 22.0
     - elixir: 1.2
       otp_release: 21.3
     - elixir: 1.2
       otp_release: 20.3
+    - elixir: 1.2
+      otp_release: 18.3
 
 # Environment setup.
 before_install:
