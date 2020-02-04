@@ -56,4 +56,21 @@ defmodule LocalClusterTest do
     assert_receive :from_node_2
     assert_receive :from_node_3
   end
+
+  test "copies configurations in child nodes" do
+    n_children = 3
+    key = :"#{__MODULE__}.#{:rand.uniform(1_000)}"
+    value = :rand.uniform(1_000)
+
+    Application.put_env(:local_cluster, key, value)
+
+    on_exit(fn ->
+      Application.delete_env(:local_cluster, key)
+    end)
+
+    nodes = LocalCluster.start_nodes(:child, n_children)
+
+    assert :rpc.multicall(nodes, Application, :get_env, [:local_cluster, key]) ==
+             {List.duplicate(value, n_children), []}
+  end
 end
