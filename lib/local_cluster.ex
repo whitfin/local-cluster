@@ -74,7 +74,9 @@ defmodule LocalCluster do
       for {key, val} <- Application.get_all_env(app_name) do
         rpc.(Application, :put_env, [app_name, key, val])
       end
+    end
 
+    for {app_name, _, _} <- Application.loaded_applications() do
       rpc.(Application, :ensure_all_started, [app_name])
     end
 
