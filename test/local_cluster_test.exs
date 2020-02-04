@@ -25,11 +25,12 @@ defmodule LocalClusterTest do
   end
 
   test "spawns tasks directly on child nodes" do
-    nodes = LocalCluster.start_nodes(:spawn, 3, [
-      files: [
-        __ENV__.file
-      ]
-    ])
+    nodes =
+      LocalCluster.start_nodes(:spawn, 3,
+        files: [
+          __ENV__.file
+        ]
+      )
 
     [node1, node2, node3] = nodes
 
