@@ -36,7 +36,7 @@ defmodule LocalClusterTest do
                  |> Enum.map(fn {app_name, _, _} -> app_name end)
     assert :local_cluster in node1_apps
     assert :ex_unit in node1_apps
-    assert :no_real_app not in node1_apps
+    assert (:no_real_app in node1_apps) == false
 
     :ok = LocalCluster.stop_nodes(nodes)
   end
