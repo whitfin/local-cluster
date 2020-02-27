@@ -72,16 +72,9 @@ defmodule LocalCluster do
       rpc.(Application, :ensure_all_started, [ app_name ])
     end
 
+    # compile and load additional files on each node
     for file <- Keyword.get(options, :files, []) do
-      { :ok, source } = File.read(file)
-
-      for { module, binary } <- Code.compile_string(source, file) do
-        rpc.(:code, :load_binary, [
-          module,
-          :unicode.characters_to_list(file),
-          binary
-        ])
-      end
+      rpc.(Code, :require_file, [file])
     end
 
     nodes
