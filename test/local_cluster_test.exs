@@ -55,4 +55,29 @@ defmodule LocalClusterTest do
     assert_receive :from_node_2
     assert_receive :from_node_3
   end
+
+  test "slave environments can be overwritten" do
+    env = "env_override_#{:random.uniform(999)}" |> String.to_atom()
+    env_var_a = "override_a_#{:random.uniform(999)}" |> String.to_atom()
+    env_var_b = "override_a_#{:random.uniform(999)}" |> String.to_atom()
+    Application.put_env(:local_cluster, env, :none)
+
+    [node_a] = LocalCluster.start_nodes(:env_override_a, 1, [
+      env_override: [local_cluster: [{env, env_var_a}]]
+    ])
+    [node_b] = LocalCluster.start_nodes(:env_override_b, 1, [
+      env_override: [local_cluster: [{env, env_var_b}]]
+    ])
+    [node_none] = LocalCluster.start_nodes(:env_override_no, 1)
+
+    # Local environment remains unchanged.
+    assert Application.get_env(:local_cluster, env) == :none
+
+    # Modifying the environment doesn't affect the remote nodes.
+    Application.delete_env(:local_cluster, env)
+
+    assert env_var_a == :rpc.block_call(node_a, Application, :get_env, [:local_cluster, env])
+    assert env_var_b == :rpc.block_call(node_b, Application, :get_env, [:local_cluster, env])
+    assert :none == :rpc.block_call(node_none, Application, :get_env, [:local_cluster, env])
+  end
 end

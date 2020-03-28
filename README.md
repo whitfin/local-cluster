@@ -144,3 +144,23 @@ defmodule MyTest do
   end
 end
 ```
+
+If you need to override the application environment inherrited by the remote nodes,
+then you can use the `:env_override` option at startup. This keyword list is merged
+onto the Application environment when specified:
+
+```elixir
+defmodule MyTest do
+  use ExUnit.Case
+
+  test "override app environment" do
+    [remote_node] = LocalCluster.start_nodes(:spawn, 1, [
+      env_override: [
+        my_app: [port: 9999]
+      ]
+    ])
+
+    assert :rpc.block_call(remote_node, Application, :get_env, [:my_app, :port]) = 9999
+  end
+end
+```
