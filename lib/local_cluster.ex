@@ -66,7 +66,10 @@ defmodule LocalCluster do
     rpc.(Mix, :env, [ Mix.env() ])
 
     for { app_name, _, _ } <- Application.loaded_applications() do
-      for { key, val } <- Application.get_all_env(app_name) do
+      env_override = get_in(options, [ :env_override, app_name ]) || []
+      app_env = Application.get_all_env(app_name) |> Keyword.merge(env_override)
+
+      for { key, val } <- app_env do
         rpc.(Application, :put_env, [ app_name, key, val ])
       end
       rpc.(Application, :ensure_all_started, [ app_name ])
