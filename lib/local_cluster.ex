@@ -65,7 +65,8 @@ defmodule LocalCluster do
     rpc.(Logger, :configure, [ level: Logger.level() ])
     rpc.(Mix, :env, [ Mix.env() ])
 
-    for { app_name, _, _ } <- Application.loaded_applications() do
+    for {app_name, _, _} <- Application.loaded_applications(),
+        app_name not in Application.get_env(:local_cluster, :skip_applications) do
       for { key, val } <- Application.get_all_env(app_name) do
         rpc.(Application, :put_env, [ app_name, key, val ])
       end

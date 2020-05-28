@@ -144,3 +144,23 @@ defmodule MyTest do
   end
 end
 ```
+
+## Skipping Applications on Remote Nodes
+
+If you need to skip running certain applications on remote nodes, you can configure this in your 
+`config/test.exs`:
+
+```elixir
+config :local_cluster, skip_applications: [:propcheck]
+```
+
+You may need to also add `runtime: false` to your `mix.exs` for that dependency and manually load
+it in your `test_helper.exs`:
+
+```elixir
+# mix.exs
+{:propcheck, "~> 1.1", only: [:test, :dev], runtime: false}
+
+# test_helper.exs
+Application.ensure_all_started(:propcheck)
+```
