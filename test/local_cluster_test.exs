@@ -24,6 +24,23 @@ defmodule LocalClusterTest do
     assert Node.ping(node3) == :pang
   end
 
+  test "load selected applications" do
+    nodes = LocalCluster.start_nodes(:child, 2, [
+      app_names: [
+        :local_cluster, :ex_unit, :no_real_app
+      ]
+    ])
+    [node1, _node2] = nodes
+
+    node1_apps = :rpc.call(node1, Application, :loaded_applications, [])
+                 |> Enum.map(fn {app_name, _, _} -> app_name end)
+    assert :local_cluster in node1_apps
+    assert :ex_unit in node1_apps
+    assert (:no_real_app in node1_apps) == false
+
+    :ok = LocalCluster.stop_nodes(nodes)
+  end
+
   test "spawns tasks directly on child nodes" do
     nodes = LocalCluster.start_nodes(:spawn, 3, [
       files: [

@@ -102,6 +102,23 @@ After calling `start_nodes/2`, you will receive a list of node names you can the
 to communicate with via RPC or however you'd like. Although they're automatically cleaned
 up when the calling process dies, you can manually stop nodes as well to test disconnection.
 
+`start_nodes/3` accepts list of options as an additional parameter.
+Two options are currently supported: `:app_names` and `:files`, as described below.
+
+Use option `:app_names` with an ordered list of application names for scenarios
+where the order of applications starting is critical, or where only a subset of apps is desired. 
+If the option is not present, all currently running applications will be started on each node, 
+in the same order as reported by `Application.loaded_applications/0`.
+Note that each application is started via `Application.ensure_all_started/2`, i.e. with all dependencies.
+
+```elixir
+    nodes = LocalCluster.start_nodes(:cluster, 16, [
+      app_names: [
+        :start_this_application, :and_then_this_one
+      ]
+    ])
+```
+
 If you need to load any additional files onto the remote nodes, you can make use of the
 `:files` option at startup time by providing an absolute file path to compile on the
 cluster. This is necessary if you wish to spawn tasks onto the cluster from inside your
