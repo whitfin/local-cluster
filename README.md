@@ -18,7 +18,7 @@ Hex (shown at the top of this README).
 
 ```elixir
 def deps do
-  [{:local_cluster, "~> 1.1", only: [:test]}]
+  [{:local_cluster, "~> 1.2", only: [:test]}]
 end
 ```
 
