@@ -92,6 +92,11 @@ defmodule LocalCluster do
     for file <- Keyword.get(options, :files, []) do
       { :ok, source } = File.read(file)
 
+      compiler_options = Code.compiler_options()
+      ignored_conflict = compiler_options[:ignore_module_conflict]
+
+      Code.compiler_options(ignore_module_conflict: true)
+
       for { module, binary } <- Code.compile_string(source, file) do
         rpc.(:code, :load_binary, [
           module,
@@ -99,6 +104,8 @@ defmodule LocalCluster do
           binary
         ])
       end
+
+      Code.compiler_options(ignore_module_conflict: ignored_conflict)
     end
 
     nodes
