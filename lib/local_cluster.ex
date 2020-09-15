@@ -77,9 +77,18 @@ defmodule LocalCluster do
     rpc.(Mix, :env, [ Mix.env() ])
 
     loaded_apps = for { app_name, _, _ } <- Application.loaded_applications() do
-      for { key, val } <- Application.get_all_env(app_name) do
+      base = Application.get_all_env(app_name)
+
+      environment =
+        options
+        |> Keyword.get(:environment, [])
+        |> Keyword.get(app_name, [])
+        |> Keyword.merge(base, fn _, v, _ -> v end)
+
+      for { key, val } <- environment do
         rpc.(Application, :put_env, [ app_name, key, val ])
       end
+
       app_name
     end
 

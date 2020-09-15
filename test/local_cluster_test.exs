@@ -78,4 +78,28 @@ defmodule LocalClusterTest do
     assert_receive :from_node_2
     assert_receive :from_node_3
   end
+
+  test "overriding environment variables on child nodes" do
+    [node1] = LocalCluster.start_nodes(:cluster_var_a, 1, [
+      environment: [
+        local_cluster: [override: "test1"]
+      ]
+    ])
+
+    [node2] = LocalCluster.start_nodes(:cluster_var_b, 1, [
+      environment: [
+        local_cluster: [override: "test2"]
+      ]
+    ])
+
+    [node3] = LocalCluster.start_nodes(:cluster_no_env, 1)
+
+    node1_env = :rpc.call(node1, Application, :get_env, [:local_cluster, :override])
+    node2_env = :rpc.call(node2, Application, :get_env, [:local_cluster, :override])
+    node3_env = :rpc.call(node3, Application, :get_env, [:local_cluster, :override])
+
+    assert node1_env == "test1"
+    assert node2_env == "test2"
+    assert node3_env == Application.get_env(:local_cluster, :override)
+  end
 end

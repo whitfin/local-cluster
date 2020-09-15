@@ -111,7 +111,7 @@ applications are loaded with all dependencies via `Application.ensure_all_starte
 
 
 ```elixir
-nodes = LocalCluster.start_nodes(:spawn, 3, [
+LocalCluster.start_nodes(:spawn, 3, [
   applications: [
     :start_this_application,
     :and_then_this_one
@@ -160,4 +160,18 @@ defmodule MyTest do
     assert_receive :from_node_3
   end
 end
+```
+
+If you need to override the application environment inherrited by the remote nodes,
+you can use the `:environment` option at startup. This koption set is merged over
+the environment inside the started nodes:
+
+```elixir
+LocalCluster.start_nodes(:spawn, 1, [
+  environment: [
+    my_app: [
+      port: 9999
+    ]
+  ]
+])
 ```
