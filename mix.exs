@@ -22,7 +22,7 @@ defmodule LocalCluster.MixProject do
         maintainers: [ "Isaac Whitfield" ]
       },
       version: @version,
-      elixir: "~> 1.2",
+      elixir: "~> 1.4",
       deps: deps(),
       docs: [
         main: "LocalCluster",
@@ -38,7 +38,6 @@ defmodule LocalCluster.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger],
       extra_applications: [:logger]
     ]
   end
