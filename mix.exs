@@ -22,7 +22,7 @@ defmodule LocalCluster.MixProject do
         maintainers: [ "Isaac Whitfield" ]
       },
       version: @version,
-      elixir: "~> 1.2",
+      elixir: "~> 1.5",
       deps: deps(),
       docs: [
         main: "LocalCluster",
@@ -38,8 +38,7 @@ defmodule LocalCluster.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      applications: [:logger],
-      extra_applications: [:logger]
+      extra_applications: [:logger, :global_flags]
     ]
   end
 
@@ -49,7 +48,7 @@ defmodule LocalCluster.MixProject do
       # Production dependencies
       { :global_flags, "~> 1.0" },
       # Local dependencies, not shipped with the app
-      { :ex_doc, "~> 0.16", optional: true, only: [ :docs ] }
+      { :ex_doc, "~> 0.24", optional: true, only: [ :docs ] }
     ]
   end
 end
