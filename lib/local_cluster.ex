@@ -93,7 +93,9 @@ defmodule LocalCluster do
       app_name
     end
     
-    ordered_apps = Keyword.get(options, :applications, loaded_apps)
+    started_applications = Application.started_applications()
+
+    ordered_apps = Keyword.get(options, :applications, started_applications)
 
     for app_name <- ordered_apps, app_name in loaded_apps do
       rpc.(Application, :ensure_all_started, [ app_name ])
