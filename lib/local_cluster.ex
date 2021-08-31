@@ -85,13 +85,14 @@ defmodule LocalCluster do
         |> Keyword.get(app_name, [])
         |> Keyword.merge(base, fn _, v, _ -> v end)
 
+      rpc.(Application, :load, [ app_name ])
       for { key, val } <- environment do
         rpc.(Application, :put_env, [ app_name, key, val ])
       end
 
       app_name
     end
-
+    
     ordered_apps = Keyword.get(options, :applications, loaded_apps)
 
     for app_name <- ordered_apps, app_name in loaded_apps do
