@@ -102,4 +102,33 @@ defmodule LocalClusterTest do
     assert node2_env == "test2"
     assert node3_env == Application.get_env(:local_cluster, :override)
   end
+
+  describe "custom node name" do
+    setup do
+      LocalCluster.stop()
+      on_exit(fn ->
+        LocalCluster.stop()
+        LocalCluster.start()
+      end)
+    end
+
+    test "creates child nodes under custom hostname" do
+      assert match?({:ok, _}, :inet.getaddr('custom.local', :inet)), """
+      Some tests require the following entry in /etc/hosts:
+
+        127.0.0.1 custom.local
+      """
+
+      LocalCluster.start(name: :"custom@custom.local")
+
+      nodes = LocalCluster.start_nodes(:child, 2)
+
+      [node1, node2] = nodes
+
+      assert Node.ping(node1) == :pong
+      assert Node.ping(node2) == :pong
+
+      assert nodes == [:"child1@custom.local", :"child2@custom.local"]
+    end
+  end
 end

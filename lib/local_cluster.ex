@@ -10,22 +10,31 @@ defmodule LocalCluster do
 
   @doc """
   Starts the current node as a distributed node.
+
+  ## Options
+
+  - `:name` - atom that specifies the manager (current) node name, defaults to
+    `:"manager@127.0.0.1"` (useful when the test suite requires a specific or externally reachable
+    host)
+
   """
   @spec start :: :ok
-  def start do
+  def start(opts \\ []) do
     # boot server startup
     start_boot_server = fn ->
       # voodoo flag to generate a "started" atom flag
       :global_flags.once("local_cluster:started", fn ->
         { :ok, _ } = :erl_boot_server.start([
-          { 127, 0, 0, 1 }
+          get_host_charlist()
         ])
       end)
       :ok
     end
 
+    name = Keyword.get(opts, :name, :"manager@127.0.0.1")
+
     # only ever handle the :erl_boot_server on the initial startup
-    case :net_kernel.start([ :"manager@127.0.0.1" ]) do
+    case :net_kernel.start([ name ]) do
       # handle nodes that have already been started elsewhere
       { :error, { :already_started, _ } } -> start_boot_server.()
       # handle the node being started
@@ -33,6 +42,14 @@ defmodule LocalCluster do
       # pass anything else
       anything -> anything
     end
+  end
+
+  defp get_host_charlist do
+    Node.self()
+    |> to_string()
+    |> String.split("@")
+    |> Enum.at(1)
+    |> String.to_charlist()
   end
 
   @doc """
@@ -58,8 +75,8 @@ defmodule LocalCluster do
   def start_nodes(prefix, amount, options \\ [])
   when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
     nodes = Enum.map(1..amount, fn idx ->
-      { :ok, name } = :slave.start_link(
-        '127.0.0.1',
+      {:ok, name} = :slave.start_link(
+        get_host_charlist(),
         :"#{prefix}#{idx}",
         '-loader inet -hosts 127.0.0.1 -setcookie "#{:erlang.get_cookie()}"'
       )

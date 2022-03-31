@@ -46,6 +46,9 @@ Application.ensure_all_started(:my_app)
 ExUnit.start()
 ```
 
+> If you need your test runner to use a specific node name, you may set it by passing
+> the `:name` option to `LocalCluster.start/1`.
+
 You will also need to pass the `--no-start` flag to `mix test`. Fortunately this is
 easy enough, as you can add an alias in your `mix.exs` to do this automatically:
 
