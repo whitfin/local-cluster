@@ -57,10 +57,19 @@ defmodule LocalCluster do
   @spec start_nodes(binary, integer, Keyword.t) :: [ atom ]
   def start_nodes(prefix, amount, options \\ [])
   when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
-    nodes = Enum.map(1..amount, fn idx ->
+    node_names= for idx <- 1..amount, do: :"#{prefix}#{idx}"
+    start_named_nodes(node_names, options)
+  end
+
+  @doc """
+  Same as `LocalCluster.start_nodes/3` but allows the exact node names to be specified.
+  """
+  @spec start_named_nodes(list, Keyword.t) :: [ atom ]
+  def start_named_nodes(node_names, options \\ []) when is_list(node_names) do
+    nodes = Enum.map(node_names, fn ndname ->
       { :ok, name } = :slave.start_link(
         '127.0.0.1',
-        :"#{prefix}#{idx}",
+        :"#{ndname}",
         '-loader inet -hosts 127.0.0.1 -setcookie "#{:erlang.get_cookie()}"'
       )
       name

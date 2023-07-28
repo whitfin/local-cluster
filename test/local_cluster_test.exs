@@ -102,4 +102,20 @@ defmodule LocalClusterTest do
     assert node2_env == "test2"
     assert node3_env == Application.get_env(:local_cluster, :override)
   end
+
+  test "passing in node names" do
+    nodes = LocalCluster.start_named_nodes([:tnode_one, :tnode_two])
+
+    [node1, node2] = nodes
+    assert node1 == :"tnode_one@127.0.0.1"
+    assert node2 == :"tnode_two@127.0.0.1"
+
+    assert Node.ping(node1) == :pong
+    assert Node.ping(node2) == :pong
+
+    :ok = LocalCluster.stop_nodes([node1])
+
+    assert Node.ping(node1) == :pang
+    assert Node.ping(node2) == :pong
+  end
 end
