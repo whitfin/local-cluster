@@ -58,15 +58,17 @@ defmodule LocalCluster do
   def start_nodes(prefix, amount, options \\ [])
   when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
     nodes = Enum.map(1..amount, fn idx ->
-      { :ok, name } = :slave.start_link(
-        '127.0.0.1',
-        :"#{prefix}#{idx}",
-        '-loader inet -hosts 127.0.0.1 -setcookie "#{:erlang.get_cookie()}"'
-      )
-      name
+      { :ok, pid, name } = :peer.start_link(%{
+        host: '127.0.0.1',
+        name: :"#{prefix}#{idx}",
+        args: ['-loader inet -hosts 127.0.0.1 -setcookie "#{:erlang.get_cookie()}"']
+      })
+      {name, pid}
     end)
 
-    rpc = &({ _, [] } = :rpc.multicall(nodes, &1, &2, &3))
+    node_names = Enum.map(nodes, fn { name, _ } -> name end)
+
+    rpc = &({ _, [] } = :rpc.multicall(node_names, &1, &2, &3))
 
     rpc.(:code, :add_paths, [ :code.get_path() ])
 
@@ -109,8 +111,8 @@ defmodule LocalCluster do
   Stops a set of child nodes.
   """
   @spec stop_nodes([ atom ]) :: :ok
-  def stop_nodes(nodes) when is_list(nodes),
-    do: Enum.each(nodes, &:slave.stop/1)
+  def stop_nodes(peer_pids) when is_list(peer_pids),
+    do: Enum.each(peer_pids, fn pid -> :peer.stop(pid) end)
 
   @doc """
   Stops the current distributed node and turns it back into a local node.
