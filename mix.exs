@@ -31,6 +31,10 @@ defmodule LocalCluster.MixProject do
       ],
       aliases: [
         test: "test --no-start"
+      ],
+      preferred_cli_env: [
+        docs: :docs,
+        credo: :lint
       ]
     ]
   end
@@ -48,6 +52,7 @@ defmodule LocalCluster.MixProject do
       # Production dependencies
       {:global_flags, "~> 1.0"},
       # Local dependencies, not shipped with the app
+      {:credo, "~> 1.6", optional: true, only: [:lint]},
       {:ex_doc, "~> 0.24", optional: true, only: [:docs]}
     ]
   end
