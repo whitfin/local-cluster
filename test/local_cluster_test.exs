@@ -25,13 +25,14 @@ defmodule LocalClusterTest do
   end
 
   test "load selected applications" do
-    nodes = LocalCluster.start_nodes(:child, 1, [
-      applications: [
-        :local_cluster,
-        :ex_unit,
-        :no_real_app
-      ]
-    ])
+    nodes =
+      LocalCluster.start_nodes(:child, 1,
+        applications: [
+          :local_cluster,
+          :ex_unit,
+          :no_real_app
+        ]
+      )
 
     [node1] = nodes
 
@@ -42,17 +43,18 @@ defmodule LocalClusterTest do
 
     assert :local_cluster in node1_apps
     assert :ex_unit in node1_apps
-    assert (:no_real_app in node1_apps) == false
+    assert :no_real_app in node1_apps == false
 
     :ok = LocalCluster.stop_nodes(nodes)
   end
 
   test "spawns tasks directly on child nodes" do
-    nodes = LocalCluster.start_nodes(:spawn, 3, [
-      files: [
-        __ENV__.file
-      ]
-    ])
+    nodes =
+      LocalCluster.start_nodes(:spawn, 3,
+        files: [
+          __ENV__.file
+        ]
+      )
 
     [node1, node2, node3] = nodes
 
@@ -80,23 +82,30 @@ defmodule LocalClusterTest do
   end
 
   test "overriding environment variables on child nodes" do
-    [node1] = LocalCluster.start_nodes(:cluster_var_a, 1, [
-      environment: [
-        local_cluster: [override: "test1"]
-      ]
-    ])
+    [node1] =
+      LocalCluster.start_nodes(:cluster_var_a, 1,
+        environment: [
+          local_cluster: [override: "test1"]
+        ]
+      )
 
-    [node2] = LocalCluster.start_nodes(:cluster_var_b, 1, [
-      environment: [
-        local_cluster: [override: "test2"]
-      ]
-    ])
+    [node2] =
+      LocalCluster.start_nodes(:cluster_var_b, 1,
+        environment: [
+          local_cluster: [override: "test2"]
+        ]
+      )
 
     [node3] = LocalCluster.start_nodes(:cluster_no_env, 1)
 
-    node1_env = :rpc.call(node1, Application, :get_env, [:local_cluster, :override])
-    node2_env = :rpc.call(node2, Application, :get_env, [:local_cluster, :override])
-    node3_env = :rpc.call(node3, Application, :get_env, [:local_cluster, :override])
+    node1_env =
+      :rpc.call(node1, Application, :get_env, [:local_cluster, :override])
+
+    node2_env =
+      :rpc.call(node2, Application, :get_env, [:local_cluster, :override])
+
+    node3_env =
+      :rpc.call(node3, Application, :get_env, [:local_cluster, :override])
 
     assert node1_env == "test1"
     assert node2_env == "test2"

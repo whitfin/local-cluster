@@ -15,11 +15,11 @@ defmodule LocalCluster.MixProject do
           "mix.exs",
           "LICENSE"
         ],
-        licenses: [ "MIT" ],
+        licenses: ["MIT"],
         links: %{
           "GitHub" => @url_github
         },
-        maintainers: [ "Isaac Whitfield" ]
+        maintainers: ["Isaac Whitfield"]
       },
       version: @version,
       elixir: "~> 1.5",
@@ -27,7 +27,7 @@ defmodule LocalCluster.MixProject do
       docs: [
         main: "LocalCluster",
         source_ref: "v#{@version}",
-        source_url: @url_github,
+        source_url: @url_github
       ],
       aliases: [
         test: "test --no-start"
@@ -46,9 +46,9 @@ defmodule LocalCluster.MixProject do
   defp deps do
     [
       # Production dependencies
-      { :global_flags, "~> 1.0" },
+      {:global_flags, "~> 1.0"},
       # Local dependencies, not shipped with the app
-      { :ex_doc, "~> 0.24", optional: true, only: [ :docs ] }
+      {:ex_doc, "~> 0.24", optional: true, only: [:docs]}
     ]
   end
 end

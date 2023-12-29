@@ -2,45 +2,35 @@ name: CI
 
 on:
   push:
-    branches: [ master ]
+    branches: [ main ]
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   build:
-    name: Elixir ${{ matrix.elixir }} / OTP ${{ matrix.otp }}
-    runs-on: ubuntu-16.04
+    name: Elixir ${{ matrix.elixir }}
+    runs-on: ubuntu-latest
+    container:
+      image: elixir:${{ matrix.elixir }}
     strategy:
       fail-fast: false
       matrix:
-        otp:
-          - '23.3'
         elixir:
-          - '1.12'
-        include:
-          - elixir: '1.11'
-            otp: '22.3'
-          - elixir: '1.10'
-            otp: '21.3'
-          - elixir: '1.9'
-            otp: '20.3'
-          - elixir: '1.8'
-            otp: '20.3'
-          - elixir: '1.7'
-            otp: '19.3'
-          - elixir: '1.6'
-            otp: '19.3'
-          - elixir: '1.5'
-            otp: '18.3'
+        - '1.16'
+        - '1.15'
+        - '1.14'
+        - '1.13'
+        - '1.12'
+        - '1.11'
+        - '1.10'
+        - '1.9'
+        - '1.8'
+        - '1.7'
+        - '1.6'
+        - '1.5'
 
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Elixir
-        uses: erlef/setup-elixir@v1
-        with:
-          otp-version: ${{ matrix.otp }}
-          elixir-version: ${{ matrix.elixir }}
+      - uses: actions/checkout@v3
 
       - name: Setup Environment
         run: |
@@ -51,3 +41,25 @@ jobs:
 
       - name: Run Tests
         run: mix test --trace
+
+
+  lint:
+    name: Linting
+    runs-on: ubuntu-latest
+    container:
+      image: elixir:1.16
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Environment
+        run: |
+          epmd -daemon
+          mix local.hex --force
+          mix local.rebar --force
+          mix deps.get
+
+      - name: Validate Formatting
+        run: mix format --check-formatted
+
+      - name: Validate Linting
+        run: mix credo --all --format=oneline
