@@ -163,7 +163,7 @@ end
 ```
 
 If you need to override the application environment inherrited by the remote nodes,
-you can use the `:environment` option at startup. This koption set is merged over
+you can use the `:environment` option at startup. This option set is merged over
 the environment inside the started nodes:
 
 ```elixir
