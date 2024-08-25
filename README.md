@@ -76,9 +76,9 @@ defmodule MyTest do
   use ExUnit.Case
 
   test "something with a required cluster" do
-    nodes = LocalCluster.start_nodes("my-cluster", 3)
+    peers = LocalCluster.start_nodes("my-cluster", 3)
 
-    [node1, node2, node3] = nodes
+    [node1, node2, node3] = LocalCluster.nodes(peers)
 
     assert Node.ping(node1) == :pong
     assert Node.ping(node2) == :pong
@@ -99,7 +99,7 @@ defmodule MyTest do
 end
 ```
 
-After calling `start_nodes/2`, you will receive a list of node names you can then use
+After calling `start_nodes/2`, you will receive a list of peers you can then use
 to communicate with via RPC or however you'd like. Although they're automatically cleaned
 up when the calling process dies, you can manually stop nodes as well to test disconnection.
 
@@ -129,13 +129,13 @@ defmodule MyTest do
   use ExUnit.Case
 
   test "spawning tasks on a cluster" do
-    nodes = LocalCluster.start_nodes(:spawn, 3, [
+    peers = LocalCluster.start_nodes(:spawn, 3, [
       files: [
         __ENV__.file
       ]
     ])
 
-    [node1, node2, node3] = nodes
+    [node1, node2, node3] = LocalCluster.nodes(peers)
 
     assert Node.ping(node1) == :pong
     assert Node.ping(node2) == :pong
