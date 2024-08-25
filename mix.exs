@@ -22,7 +22,7 @@ defmodule LocalCluster.MixProject do
         maintainers: ["Isaac Whitfield"]
       },
       version: @version,
-      elixir: "~> 1.5",
+      elixir: "~> 1.7",
       deps: deps(),
       docs: [
         main: "LocalCluster",
