@@ -41,7 +41,7 @@ jobs:
       - name: Run Tests
         run: mix test --trace
 
-   lint:
+  lint:
     name: Linting
     runs-on: ubuntu-latest
     container:
