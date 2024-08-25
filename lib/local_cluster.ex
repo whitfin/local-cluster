@@ -8,6 +8,8 @@ defmodule LocalCluster do
   when testing distributed applications.
   """
 
+  alias LocalCluster.Peer
+
   @doc """
   Starts the current node as a distributed node.
   """
@@ -41,7 +43,7 @@ defmodule LocalCluster do
   Starts a number of namespaced child nodes.
 
   This will start the current runtime environment on a set of child nodes
-  and return the names of the nodes to the user for further use. All child
+  and return a list of `%LocalCluster.Peer{}` structs for further use. All child
   nodes are linked to the current process, and so will terminate when the
   parent process does for automatic cleanup.
 
@@ -55,23 +57,21 @@ defmodule LocalCluster do
   nodes, which are then compiled on the remote node. This is necessary
   if you wish to spawn tasks from inside test code, as test code would
   not typically be loaded automatically.
+
+  The caller should use `LocalCluster.node(peer)` and `LocalCluster.nodes(peers)`
+  to retrieve the node names.
   """
-  @spec start_nodes(binary, integer, Keyword.t()) :: [atom]
+  @spec start_nodes(binary, integer, Keyword.t()) :: [Peer.t()]
   def start_nodes(prefix, amount, options \\ [])
       when (is_binary(prefix) or is_atom(prefix)) and is_integer(amount) do
-    nodes =
+    peers =
       Enum.map(1..amount, fn idx ->
-        {:ok, name} =
-          :slave.start_link(
-            ~c"127.0.0.1",
-            :"#{prefix}#{idx}",
-            ~c"-loader inet -hosts 127.0.0.1 -setcookie \"#{:erlang.get_cookie()}\""
-          )
+        {:ok, peer} = Peer.start_link(prefix, idx)
 
-        name
+        peer
       end)
 
-    rpc = &({_, []} = :rpc.multicall(nodes, &1, &2, &3))
+    rpc = &({_, []} = :rpc.multicall(Peer.nodes(peers), &1, &2, &3))
 
     rpc.(:code, :add_paths, [:code.get_path()])
 
@@ -108,15 +108,18 @@ defmodule LocalCluster do
       rpc.(Code, :require_file, [file])
     end
 
-    nodes
+    peers
   end
 
   @doc """
   Stops a set of child nodes.
   """
-  @spec stop_nodes([atom]) :: :ok
-  def stop_nodes(nodes) when is_list(nodes),
-    do: Enum.each(nodes, &:slave.stop/1)
+  @spec stop_nodes([Peer.t()]) :: :ok
+  def stop_nodes(peers) when is_list(peers),
+    do: Enum.each(peers, &Peer.stop/1)
+
+  defdelegate nodes(peers), to: Peer
+  defdelegate node(peer), to: Peer
 
   @doc """
   Stops the current distributed node and turns it back into a local node.
