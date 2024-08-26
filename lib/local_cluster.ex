@@ -224,8 +224,10 @@ defmodule LocalCluster do
     rpc.(Logger, :configure, [[level: Logger.level()]])
     rpc.(Mix, :env, [Mix.env()])
 
+    loaded_apps = Application.loaded_applications()
+
     loaded_apps =
-      for {app_name, _, _} <- Application.loaded_applications() do
+      Enum.map(loaded_apps, fn {app_name, _, _} ->
         base = Application.get_all_env(app_name)
 
         environment =
@@ -239,7 +241,7 @@ defmodule LocalCluster do
         end
 
         app_name
-      end
+      end)
 
     ordered_apps = Keyword.get(options, :applications, loaded_apps)
 
