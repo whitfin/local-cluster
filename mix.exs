@@ -1,7 +1,8 @@
 defmodule LocalCluster.MixProject do
   use Mix.Project
 
-  @version "1.2.1"
+  @version "2.0.0"
+  @url_docs "http://hexdocs.pm/local_cluster"
   @url_github "https://github.com/whitfin/local-cluster"
 
   def project do
@@ -17,6 +18,7 @@ defmodule LocalCluster.MixProject do
         ],
         licenses: ["MIT"],
         links: %{
+          "Docs" => @url_docs,
           "GitHub" => @url_github
         },
         maintainers: ["Isaac Whitfield"]
@@ -31,6 +33,9 @@ defmodule LocalCluster.MixProject do
       ],
       aliases: [
         test: "test --no-start"
+      ],
+      test_coverage: [
+        tool: ExCoveralls
       ],
       preferred_cli_env: [
         docs: :docs,
@@ -52,8 +57,9 @@ defmodule LocalCluster.MixProject do
       # Production dependencies
       {:global_flags, "~> 1.0"},
       # Local dependencies, not shipped with the app
-      {:credo, "~> 1.6", optional: true, only: [:lint]},
-      {:ex_doc, "~> 0.24", optional: true, only: [:docs]}
+      {:credo, "~> 1.7", optional: true, only: [:lint]},
+      {:ex_doc, "~> 0.29", optional: true, only: [:docs]},
+      {:excoveralls, "~> 0.15", optional: true, only: [:cover]}
     ]
   end
 end

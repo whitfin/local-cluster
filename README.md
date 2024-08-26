@@ -1,5 +1,5 @@
 # LocalCluster
-[![Build Status](https://img.shields.io/github/actions/workflow/status/whitfin/local-cluster/ci.yml?branch=main)](https://github.com/whitfin/local-cluster/actions) [![Hex.pm Version](https://img.shields.io/hexpm/v/local_cluster.svg)](https://hex.pm/packages/local_cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local_cluster/)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/whitfin/local-cluster/ci.yml?branch=main)](https://github.com/whitfin/local-cluster/actions) [![Coverage Status](https://img.shields.io/coveralls/whitfin/local-cluster.svg)](https://coveralls.io/github/whitfin/local-cluster) [![Hex.pm Version](https://img.shields.io/hexpm/v/local_cluster.svg)](https://hex.pm/packages/local_cluster) [![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://hexdocs.pm/local_cluster/)
 
 This library is designed to assist in testing distributed states in Elixir
 which require a number of local nodes.
@@ -18,7 +18,7 @@ Hex (shown at the top of this README).
 
 ```elixir
 def deps do
-  [{:local_cluster, "~> 1.2", only: [:test]}]
+  [{:local_cluster, "~> 2.0", only: [:test]}]
 end
 ```
 
@@ -75,23 +75,30 @@ child nodes for testing:
 defmodule MyTest do
   use ExUnit.Case
 
-  test "something with a required cluster" do
-    peers = LocalCluster.start_nodes("my-cluster", 3)
+  test "creates and stops child nodes" do
+    # create a new cluster of 3 nodes
+    {:ok, cluster} = LocalCluster.start_link(3)
 
-    [node1, node2, node3] = LocalCluster.nodes(peers)
+    # fetch the list of nodes contained in the cluster
+    {:ok, [node1, node2, node3]} = LocalCluster.nodes(cluster)
 
+    # check that all nodes respond
     assert Node.ping(node1) == :pong
     assert Node.ping(node2) == :pong
     assert Node.ping(node3) == :pong
 
-    :ok = LocalCluster.stop_nodes([node1])
+    # stop a single node in our cluster
+    :ok = LocalCluster.stop(cluster, node1)
 
+    # check that node does not respond
     assert Node.ping(node1) == :pang
     assert Node.ping(node2) == :pong
     assert Node.ping(node3) == :pong
 
-    :ok = LocalCluster.stop()
+    # stop the entire cluster
+    :ok = LocalCluster.stop(cluster)
 
+    # check that no nodes respond
     assert Node.ping(node1) == :pang
     assert Node.ping(node2) == :pang
     assert Node.ping(node3) == :pang
@@ -99,79 +106,81 @@ defmodule MyTest do
 end
 ```
 
-After calling `start_nodes/2`, you will receive a list of peers you can then use
-to communicate with via RPC or however you'd like. Although they're automatically cleaned
-up when the calling process dies, you can manually stop nodes as well to test disconnection.
+After calling `start_link/2` you will receive a process identifier which can be used
+to fetch a list of spawned nodes to communicate with via RPC (or whatever you like).
+Although these nodes are automatically cleaned up when the calling process dies, you
+can manually stop nodes to test disconnection within a test.
 
-In the case you need to control application startup manually, you can make use of the
-`:applications` option. This option determines startup order of your applications, and allows
-you to exclude applications from the startup sequence. If this is not provided, the default
-behaviour will be to start the same applications as are running on the local node. These
-applications are loaded with all dependencies via `Application.ensure_all_started/2`.
+## Options
 
+There are various options supported when creating a cluster, here are most of them
+with a few notes about what they're for and what they do:
 
 ```elixir
-LocalCluster.start_nodes(:spawn, 3, [
+LocalCluster.start_link(3, [
+  # Allows the caller to determine startup order of bundled applications,
+  # and allows you to exclude applications from the startup sequence. If
+  # this option is not provided, the default behaviour will be to match
+  # the startup sequence of the local node. Each of these applications
+  # will be loaded with all dependencies via `Application.ensure_all_started/2`.
   applications: [
     :start_this_application,
     :and_then_this_one
-  ]
-])
-```
+  ],
 
-If you need to load any additional files onto the remote nodes, you can make use of the
-`:files` option at startup time by providing an absolute file path to compile on the
-cluster. This is necessary if you wish to spawn tasks onto the cluster from inside your
-test code, as your test code is not loaded into the cluster automatically:
-
-```elixir
-defmodule MyTest do
-  use ExUnit.Case
-
-  test "spawning tasks on a cluster" do
-    peers = LocalCluster.start_nodes(:spawn, 3, [
-      files: [
-        __ENV__.file
-      ]
-    ])
-
-    [node1, node2, node3] = LocalCluster.nodes(peers)
-
-    assert Node.ping(node1) == :pong
-    assert Node.ping(node2) == :pong
-    assert Node.ping(node3) == :pong
-
-    caller = self()
-
-    Node.spawn(node1, fn ->
-      send(caller, :from_node_1)
-    end)
-
-    Node.spawn(node2, fn ->
-      send(caller, :from_node_2)
-    end)
-
-    Node.spawn(node3, fn ->
-      send(caller, :from_node_3)
-    end)
-
-    assert_receive :from_node_1
-    assert_receive :from_node_2
-    assert_receive :from_node_3
-  end
-end
-```
-
-If you need to override the application environment inherrited by the remote nodes,
-you can use the `:environment` option at startup. This option set is merged over
-the environment inside the started nodes:
-
-```elixir
-LocalCluster.start_nodes(:spawn, 1, [
+  # Similar to the above; if you need to override the application environment
+  # inherited by your cluster nodes, you can use the `:environment` option to
+  # merge values _over_ the environment inside the started nodes.
   environment: [
     my_app: [
       port: 9999
     ]
-  ]
+  ],
+
+  # Enables loading any additional files onto the remote notes, by providing
+  # an absolute file path to compile inside the cluster. This is necessary if
+  # you wish to spawn tasks onto the cluster from inside your test code, as
+  # test code is not loaded automatically.
+  files: [
+    __ENV__.file
+  ],
+
+  # Enables naming and registration of the cluster PID. If this value is
+  # not provided the cluster is reachable only by PID.
+  name: :my_cluster,
+
+  # Enables a custom node name prefix for members of the cluster. If this
+  # is not provided it will default to the value of `:name`. If that flag
+  # is also not provided, a random string will be generated.
+  prefix: ""
 ])
 ```
+
+## Migration to v2
+
+If you previously used this module on the v1.x line, a few things have changed
+within the API to make it more consistent and Elixir-y (hopefully). The following
+examples should show how you can map over to the new API easily:
+
+```elixir
+# starting a cluster in v1.x
+nodes = LocalCluster.start_nodes("my-cluster", 3, [
+  # options...
+])
+
+# stopping a cluster in v1.x
+LocalCluster.stop_nodes(nodes)
+
+# starting a cluster in v2.x
+{:ok, cluster} = LocalCluster.start_link(3, [
+  prefix: "my_cluster"
+])
+{:ok, nodes} = LocalCluster.nodes(cluster)
+
+# stopping a cluster in v2.x
+LocalCluster.stop(cluster)
+```
+
+Hopefully even though this is a major bump it's not very disruptive. Unfortunately
+there was no reliable way to keep the old API, as frequent use in `ExUnit` meant
+that we can't use the process dictionary to store the cluster name.
