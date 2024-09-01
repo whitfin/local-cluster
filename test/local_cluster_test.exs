@@ -32,6 +32,20 @@ defmodule LocalClusterTest do
     assert Node.ping(node3) == :pang
   end
 
+  test "adding members to an existing cluster" do
+    # create a new cluster of 3 nodes
+    {:ok, cluster} = LocalCluster.start_link(3)
+
+    # fetch the list of nodes contained in the cluster
+    {:ok, [node1, node2, node3]} = LocalCluster.nodes(cluster)
+
+    # add another node to the existing cluster
+    {:ok, [member(node: node4)]} = LocalCluster.start(cluster, 1)
+
+    # verify it's reflected in the node listing alongside the others
+    {:ok, [^node1, ^node2, ^node3, ^node4]} = LocalCluster.nodes(cluster)
+  end
+
   test "fetching pids and nodes from members" do
     # create a new cluster of 3 nodes
     {:ok, cluster} = LocalCluster.start_link(3)

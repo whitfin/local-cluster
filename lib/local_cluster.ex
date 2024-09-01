@@ -12,6 +12,9 @@ defmodule LocalCluster do
   # a list of letters A - Z
   @alphabet Enum.to_list(?a..?z)
 
+  # generally acceptable timeout
+  @timeout :timer.seconds(30)
+
   # Cluster type
   @type t :: pid() | atom()
 
@@ -22,10 +25,25 @@ defmodule LocalCluster do
             node: node()
           )
 
+  # Cluster state
+  @type state ::
+          record(:state,
+            index: integer(),
+            prefix: binary(),
+            members: [member()],
+            options: Keyword.t()
+          )
+
   # Cluster member record
   defrecord :member,
     pid: nil,
     node: nil
+
+  defrecord :state,
+    index: 0,
+    prefix: nil,
+    members: [],
+    options: []
 
   ##############
   # Public API #
@@ -141,7 +159,7 @@ defmodule LocalCluster do
   """
   @spec members(cluster :: LocalCluster.t()) :: {:ok, [member()]}
   def members(cluster) when is_atom(cluster) or is_pid(cluster),
-    do: {:ok, GenServer.call(cluster, :members)}
+    do: {:ok, GenServer.call(cluster, :members, @timeout)}
 
   @doc """
   Retrieves the process identifiers within a cluster.
@@ -151,6 +169,14 @@ defmodule LocalCluster do
     {:ok, members} = members(cluster)
     {:ok, Enum.map(members, &member(&1, :pid))}
   end
+
+  @doc """
+  Starts new members within a cluster.
+  """
+  @spec start(cluster :: LocalCluster.t(), amount :: integer()) ::
+          {:ok, [member()]}
+  def start(cluster, amount) when is_integer(amount),
+    do: GenServer.call(cluster, {:start, amount}, @timeout)
 
   @doc """
   Stops a previously started cluster.
@@ -167,13 +193,13 @@ defmodule LocalCluster do
   """
   @spec stop(cluster :: LocalCluster.t(), member() | atom() | pid()) :: :ok
   def stop(cluster, member() = member),
-    do: GenServer.call(cluster, {:stop, member})
+    do: GenServer.call(cluster, {:stop, member}, @timeout)
 
   def stop(cluster, node) when is_atom(node),
-    do: GenServer.call(cluster, {:stop, node})
+    do: GenServer.call(cluster, {:stop, node}, @timeout)
 
   def stop(cluster, pid) when is_pid(pid),
-    do: GenServer.call(cluster, {:stop, pid})
+    do: GenServer.call(cluster, {:stop, pid}, @timeout)
 
   @doc """
   Stops the current distributed node and turns it back into a local node.
@@ -198,12 +224,76 @@ defmodule LocalCluster do
         end)
       end)
 
+    state =
+      state(
+        prefix: prefix,
+        members: [],
+        options: options
+      )
+
+    add_members(state, amount)
+  end
+
+  @doc false
+  # Simple handler to fetch all known cluster members.
+  def handle_call(:members, _from, state(members: members) = state),
+    do: {:reply, members, state}
+
+  @doc false
+  # Handled to enable adding new members to an existing cluster.
+  def handle_call({:start, amount}, _from, state(members: m1) = state) do
+    {:ok, state(members: m2) = modified} = add_members(state, amount)
+    {:reply, {:ok, Enum.reduce(m1, m2, &List.delete(&2, &1))}, modified}
+  end
+
+  @doc false
+  # Allows termination of a single member node without stopping the parent.
+  def handle_call({:stop, member() = member}, _from, state) do
+    handle_stop(state, fn
+      ^member -> true
+      _member -> false
+    end)
+  end
+
+  def handle_call({:stop, node}, _from, state) when is_atom(node),
+    do: handle_stop(state, &match?(member(node: ^node), &1))
+
+  def handle_call({:stop, pid}, _from, state) when is_pid(pid),
+    do: handle_stop(state, &match?(member(pid: ^pid), &1))
+
+  @doc false
+  def handle_call(_msg, _from, state),
+    # coveralls-ignore-next-line
+    do: {:reply, nil, state}
+
+  defp handle_stop(state(members: members) = state, locator) do
+    case Enum.find(members, locator) do
+      nil ->
+        {:reply, :ok, state}
+
+      member(pid: pid) = member ->
+        true = Process.unlink(pid)
+        :ok = stop_member(member)
+
+        {:reply, :ok, state(state, members: List.delete(members, member))}
+    end
+  end
+
+  ###############
+  # Private API #
+  ###############
+
+  # Attach members to a current set of members.
+  defp add_members(state, amount) do
+    state(index: index, prefix: prefix) = state
+    state(members: current, options: options) = state
+
     members =
       Enum.map(1..amount, fn idx ->
         {:ok, pair} =
           start_member(
             ~c"127.0.0.1",
-            :"#{prefix}#{idx}",
+            :"#{prefix}#{index + idx}",
             Enum.map(
               ~w[-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}],
               &String.to_charlist/1
@@ -253,50 +343,11 @@ defmodule LocalCluster do
       rpc.(Code, :require_file, [file])
     end
 
-    {:ok, members}
+    new_members = current ++ members
+    new_index = length(current ++ members)
+
+    {:ok, state(state, index: new_index, members: new_members)}
   end
-
-  @doc false
-  # Simple handler to fetch all known cluster members.
-  def handle_call(:members, _from, members),
-    do: {:reply, members, members}
-
-  @doc false
-  # Allows termination of a single member node without stopping the parent.
-  def handle_call({:stop, member() = member}, _from, members) do
-    handle_stop(members, fn
-      ^member -> true
-      _member -> false
-    end)
-  end
-
-  def handle_call({:stop, node}, _from, members) when is_atom(node),
-    do: handle_stop(members, &match?(member(node: ^node), &1))
-
-  def handle_call({:stop, pid}, _from, members) when is_pid(pid),
-    do: handle_stop(members, &match?(member(pid: ^pid), &1))
-
-  @doc false
-  def handle_call(_msg, _from, members),
-    # coveralls-ignore-next-line
-    do: {:reply, nil, members}
-
-  defp handle_stop(members, locator) do
-    case Enum.find(members, locator) do
-      nil ->
-        {:reply, :ok, members}
-
-      member(pid: pid) = member ->
-        true = Process.unlink(pid)
-        :ok = stop_member(member)
-
-        {:reply, :ok, List.delete(members, member)}
-    end
-  end
-
-  ###############
-  # Private API #
-  ###############
 
   # Handling of Erlang OTP changes prior to `:peer` being introduced
   if Code.ensure_loaded?(:peer) and function_exported?(:peer, :start_link, 1) do
