@@ -121,6 +121,11 @@ defmodule LocalCluster do
       the indexed nodes in a cluster. This is randomly generated if not
       provided.
 
+    * `:member_options`
+
+      The `:member_options` option allows the caller to provide additional
+      command line options when a member is started.  This is expected to be a
+      list of strings that will be appended to the default member options.
   """
   @spec start_link(
           amount :: integer(),
@@ -288,6 +293,8 @@ defmodule LocalCluster do
     state(index: index, prefix: prefix) = state
     state(members: current, options: options) = state
 
+    member_options = Keyword.get(options, :member_options, [])
+
     members =
       Enum.map(1..amount, fn idx ->
         {:ok, pair} =
@@ -295,7 +302,8 @@ defmodule LocalCluster do
             ~c"127.0.0.1",
             :"#{prefix}#{index + idx}",
             Enum.map(
-              ~w[-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}],
+              ~w[-loader inet -hosts 127.0.0.1 -setcookie #{:erlang.get_cookie()}] ++
+                member_options,
               &String.to_charlist/1
             )
           )
